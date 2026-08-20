@@ -11,68 +11,129 @@ const router = express.Router();
 router.get('/', protect, requireRole('admin', 'mentor'), async (req, res) => {
   try {
     const query = req.user.role === 'mentor' ? { mentorId: req.user.mentorCode } : {};
-    const students = await Student.find(query);
-
-    // Risk distribution
-    const distribution = { High: 0, Medium: 0, Low: 0 };
-    const byDepartment = {};   // { "IT": { High: 2, Medium: 1, Low: 5 }, ... }
-    const byClass = {};
-    const attendanceDistribution = { '0-50%': 0, '51-65%': 0, '66-75%': 0, '76-85%': 0, '86-100%': 0 };
-    const testTrends = [];
-    const highRiskStudents = [];
-
-    for (let i = 0; i < students.length; i++) {
-      const s = students[i];
-      const riskLevel = s.riskLevel || 'Low';
-      const riskScore = s.riskScore || 0;
-      const topReasons = getTopReasons(s.mlInsights);
-      
-      if (distribution[riskLevel] !== undefined) {
-          distribution[riskLevel]++;
+    
+    if (req.query.batchId === 'latest') {
+      const lastStudent = await Student.findOne({ batchId: { $ne: null } }).sort({ createdAt: -1 });
+      if (lastStudent && lastStudent.batchId) {
+        query.batchId = lastStudent.batchId;
+      } else {
+        // If no batches exist, force an empty match
+        query.batchId = 'none';
       }
-
-      const dept = s.department || 'Unspecified';
-      byDepartment[dept] = byDepartment[dept] || { High: 0, Medium: 0, Low: 0 };
-      byDepartment[dept][riskLevel]++;
-
-      const cls = s.class || 'Unspecified';
-      byClass[cls] = byClass[cls] || { High: 0, Medium: 0, Low: 0 };
-      byClass[cls][riskLevel]++;
-
-      // Attendance Buckets
-      const att = s.attendancePercent || 0;
-      if (att <= 50) attendanceDistribution['0-50%']++;
-      else if (att <= 65) attendanceDistribution['51-65%']++;
-      else if (att <= 75) attendanceDistribution['66-75%']++;
-      else if (att <= 85) attendanceDistribution['76-85%']++;
-      else attendanceDistribution['86-100%']++;
-
-      // Test Trends
-      if (s.previous3TestsAvg != null && s.last3TestsAvg != null) {
-        testTrends.push({ x: s.previous3TestsAvg, y: s.last3TestsAvg, risk: riskLevel });
-      }
-
-      // High Risk List
-      if (riskLevel === 'High') {
-        highRiskStudents.push({
-          studentId: s.studentId,
-          name: `${s.firstName} ${s.lastName}`,
-          class: s.class,
-          riskScore: Math.round(riskScore * 100),
-          primaryIssue: topReasons?.[0]?.reason || 'Multiple Factors'
-        });
-      }
+    } else if (req.query.batchId) {
+      query.batchId = req.query.batchId;
     }
+    
+    // Use MongoDB Aggregations to bypass network bottlenecks
+    const matchStage = { $match: query };
+    const facetStage = {
+      $facet: {
+        totalStudents: [{ $count: "count" }],
+        unassignedCount: [
+          { $match: { mentorId: { $in: [null, ""] } } },
+          { $count: "count" }
+        ],
+        riskDistribution: [
+          { $group: { _id: { $ifNull: ["$riskLevel", "Low"] }, count: { $sum: 1 } } }
+        ],
+        byDepartment: [
+          {
+            $group: {
+              _id: { dept: { $ifNull: ["$department", "Unspecified"] }, risk: { $ifNull: ["$riskLevel", "Low"] } },
+              count: { $sum: 1 }
+            }
+          }
+        ],
+        byClass: [
+          {
+            $group: {
+              _id: { cls: { $ifNull: ["$class", "Unspecified"] }, risk: { $ifNull: ["$riskLevel", "Low"] } },
+              count: { $sum: 1 }
+            }
+          }
+        ],
+        attendanceDistribution: [
+          {
+            $bucket: {
+              groupBy: { $ifNull: ["$attendancePercent", 0] },
+              boundaries: [0, 51, 66, 76, 86, 101],
+              default: "Unknown",
+              output: { count: { $sum: 1 } }
+            }
+          }
+        ],
+        testTrends: [
+          { $match: { previous3TestsAvg: { $ne: null }, last3TestsAvg: { $ne: null } } },
+          { $project: { _id: 0, x: "$previous3TestsAvg", y: "$last3TestsAvg", risk: { $ifNull: ["$riskLevel", "Low"] } } }
+        ],
+        highRiskStudents: [
+          { $match: { riskLevel: "High" } },
+          { $sort: { riskScore: -1 } },
+          { $limit: 5 },
+          {
+            $project: {
+              _id: 0,
+              studentId: 1,
+              firstName: 1,
+              lastName: 1,
+              class: 1,
+              riskScore: 1,
+              mlInsights: 1
+            }
+          }
+        ]
+      }
+    };
 
-    highRiskStudents.sort((a, b) => b.riskScore - a.riskScore);
+    const [aggResult] = await Student.aggregate([matchStage, facetStage]);
 
-    // Unassigned students (no mentor)
-    const unassignedCount = students.filter((s) => !s.mentorId).length;
+    // Format results to match exactly what the frontend expects
+    const totalStudents = aggResult.totalStudents[0]?.count || 0;
+    const unassignedCount = aggResult.unassignedCount[0]?.count || 0;
+
+    const distribution = { High: 0, Medium: 0, Low: 0 };
+    aggResult.riskDistribution.forEach(d => { if(distribution[d._id] !== undefined) distribution[d._id] = d.count; });
+
+    const byDepartment = {};
+    aggResult.byDepartment.forEach(d => {
+      const dept = d._id.dept;
+      const risk = d._id.risk;
+      if (!byDepartment[dept]) byDepartment[dept] = { High: 0, Medium: 0, Low: 0 };
+      byDepartment[dept][risk] = d.count;
+    });
+
+    const byClass = {};
+    aggResult.byClass.forEach(d => {
+      const cls = d._id.cls;
+      const risk = d._id.risk;
+      if (!byClass[cls]) byClass[cls] = { High: 0, Medium: 0, Low: 0 };
+      byClass[cls][risk] = d.count;
+    });
+
+    const attendanceDistribution = { '0-50%': 0, '51-65%': 0, '66-75%': 0, '76-85%': 0, '86-100%': 0 };
+    aggResult.attendanceDistribution.forEach(b => {
+      if (b._id === 0) attendanceDistribution['0-50%'] = b.count;
+      else if (b._id === 51) attendanceDistribution['51-65%'] = b.count;
+      else if (b._id === 66) attendanceDistribution['66-75%'] = b.count;
+      else if (b._id === 76) attendanceDistribution['76-85%'] = b.count;
+      else if (b._id === 86) attendanceDistribution['86-100%'] = b.count;
+    });
+
+    const testTrends = aggResult.testTrends;
+
+    const highRiskStudents = aggResult.highRiskStudents.map(s => ({
+      studentId: s.studentId,
+      name: `${s.firstName} ${s.lastName}`,
+      class: s.class,
+      riskScore: Math.round((s.riskScore || 0) * 100),
+      primaryIssue: getTopReasons(s.mlInsights)?.[0]?.reason || 'Multiple Factors'
+    }));
 
     // Open interventions aging report
     const notesQuery = { status: 'open' };
     if (req.user.role === 'mentor') {
-      notesQuery.studentId = { $in: students.map(s => s.studentId) };
+      const myStudentIds = await Student.find(query).distinct('studentId');
+      notesQuery.studentId = { $in: myStudentIds };
     }
     const openNotes = await Note.find(notesQuery).sort({ createdAt: 1 });
     const now = Date.now();
@@ -92,14 +153,14 @@ router.get('/', protect, requireRole('admin', 'mentor'), async (req, res) => {
     const staleCount = agingReport.filter((n) => n.stale).length;
 
     res.json({
-      totalStudents: students.length,
+      totalStudents,
       unassignedCount,
       riskDistribution: distribution,
       byDepartment,
       byClass,
       attendanceDistribution,
       testTrends,
-      highRiskStudents: highRiskStudents.slice(0, 5),
+      highRiskStudents,
       openInterventions: {
         total: openNotes.length,
         staleOver30Days: staleCount,

@@ -85,12 +85,17 @@ router.post('/', protect, requireRole('admin', 'mentor'), upload.single('file'),
           studentDocs.push(studentData);
         }
 
+        // Generate unique batch ID
+        const batchId = `batch_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
         // Calculate risk for the batch
         const studentsWithRisk = await calculateRiskBatch(studentDocs);
 
         // Save all students
         for (let i = 0; i < studentDocs.length; i++) {
           const data = studentDocs[i];
+          data.batchId = batchId; // Assign batch ID
+          
           if (studentsWithRisk[i]) {
               data.riskScore = studentsWithRisk[i].riskScore;
               data.riskLevel = studentsWithRisk[i].riskLevel;
@@ -113,6 +118,7 @@ router.post('/', protect, requireRole('admin', 'mentor'), upload.single('file'),
           processed,
           unassigned,
           skipped,
+          batchId, // Return batch ID to the frontend
         });
       } catch (err) {
         console.error('Upload processing error:', err);

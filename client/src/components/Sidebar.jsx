@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { FiUsers, FiGrid, FiUploadCloud, FiHeart, FiUserCheck, FiAlertTriangle, FiMessageCircle, FiX } from 'react-icons/fi';
+import { FiUsers, FiGrid, FiUploadCloud, FiHeart, FiUserCheck, FiAlertTriangle, FiMessageCircle, FiX, FiBarChart2 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 
 const NAV_ITEMS = {
@@ -8,9 +8,11 @@ const NAV_ITEMS = {
     { to: '/mentor', label: 'My Students', icon: FiUsers },
     { to: '/mentor/escalations', label: 'Escalations', icon: FiAlertTriangle },
     { to: '/upload', label: 'Upload Data', icon: FiUploadCloud },
+    { to: '/admin/batch/latest', label: 'Recent Batch', icon: FiBarChart2 },
   ],
   admin: [
     { to: '/admin', label: 'Overview', icon: FiGrid },
+    { to: '/admin/batch/latest', label: 'Recent Batch', icon: FiBarChart2 },
     { to: '/upload', label: 'Upload Data', icon: FiUploadCloud },
     { to: '/admin/assignments', label: 'Assignments', icon: FiUserCheck },
     { to: '/mentor/escalations', label: 'Counselling Cases', icon: FiAlertTriangle },

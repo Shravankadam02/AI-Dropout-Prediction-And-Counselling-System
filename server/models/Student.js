@@ -21,6 +21,7 @@ const studentSchema = new mongoose.Schema(
 
     mentorId: { type: String, default: null }, // null = unassigned bucket
     counsellorId: { type: String, default: null }, // matches User.counsellorCode
+    batchId: { type: String, default: null }, // links to a specific CSV upload batch
 
     attendancePercent: { type: Number, default: 0 },
     feesDueDays: { type: Number, default: 0 },
@@ -61,5 +62,10 @@ const studentSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Indexes for faster dashboard loading and sorting
+studentSchema.index({ riskScore: -1 });
+studentSchema.index({ mentorId: 1, riskScore: -1 });
+studentSchema.index({ counsellorId: 1, riskScore: -1 });
 
 export default mongoose.model('Student', studentSchema);

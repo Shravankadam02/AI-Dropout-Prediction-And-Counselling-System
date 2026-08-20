@@ -11,6 +11,7 @@ import StudentProfile from "./pages/StudentProfile";
 import StudentHome from "./pages/StudentHome";
 import Unauthorized from "./pages/Unauthorized";
 import UploadStudents from "./pages/UploadStudents";
+import BatchOverview from "./pages/BatchOverview";
 import AdminAssignments from "./pages/AdminAssignments";
 import MentorEscalations from "./pages/MentorEscalations";
 import CounsellorDashboard from "./pages/CounsellorDashboard";
@@ -68,6 +69,15 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["admin"]}>
                   <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/batch/:batchId"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "mentor"]}>
+                  <BatchOverview />
                 </ProtectedRoute>
               }
             />

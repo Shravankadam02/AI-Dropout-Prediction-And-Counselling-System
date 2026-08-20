@@ -180,6 +180,17 @@ export default function UploadStudents() {
                 </div>
               </div>
             )}
+            
+            {result.batchId && (
+              <div className="mt-4 pt-4 border-t border-slate-100 text-center">
+                <button
+                  onClick={() => window.location.href = `/admin/batch/${result.batchId}`}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-6 rounded-lg transition"
+                >
+                  View Batch Analytics
+                </button>
+              </div>
+            )}
           </div>
         )}
 

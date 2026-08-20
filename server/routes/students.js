@@ -26,7 +26,7 @@ router.get('/', protect, async (req, res) => {
     if (req.query.department) query.department = req.query.department;
     if (req.query.college) query.college = req.query.college;
 
-    const students = await Student.find(query).sort({ riskScore: -1 });
+    const students = await Student.find(query).select('-riskHistory').sort({ riskScore: -1 });
 
     res.json({ count: students.length, students });
   } catch (err) {
@@ -53,6 +53,9 @@ router.post('/predict-all', protect, async (req, res) => {
             riskScore: studentData.riskScore,
             riskLevel: studentData.riskLevel,
             mlInsights: studentData.mlInsights
+          },
+          $push: {
+            riskHistory: { riskScore: studentData.riskScore, riskLevel: studentData.riskLevel }
           }
         }
       );
@@ -124,13 +127,12 @@ router.get('/:id', protect, async (req, res) => {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    const { riskScore, riskLevel, mlInsights } = await calculateRisk(student);
+    const riskScore = student.riskScore;
+    const riskLevel = student.riskLevel;
+    const mlInsights = student.mlInsights;
+
     const topReasons = getTopReasons(mlInsights);
     const recommendations = generateRecommendations(riskLevel, mlInsights);
-
-    // Save a snapshot to riskHistory (enables trend charts later)
-    student.riskHistory.push({ riskScore, riskLevel });
-    await student.save();
 
     res.json({
       student: {
