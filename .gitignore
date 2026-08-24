@@ -36,3 +36,8 @@ build/
 *.njsproj
 *.sln
 *.sw?
+
+# Python
+venv/
+.venv/
+__pycache__/

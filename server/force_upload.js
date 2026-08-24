@@ -13,7 +13,7 @@ mongoose.connect(process.env.MONGO_URI).then(async () => {
   console.log('Connected to DB. Starting forcefully CSV upload...');
   const rows = [];
   
-  fs.createReadStream('../students_1000_ai_ready.csv')
+  fs.createReadStream('../data/students_1000_ai_ready.csv')
     .pipe(csv())
     .on('data', (row) => rows.push(row))
     .on('end', async () => {

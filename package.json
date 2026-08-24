@@ -6,7 +6,7 @@
     "start": "concurrently \"npm run start:server\" \"npm run start:client\" \"npm run start:ml\" \"npm run start:ai\"",
     "start:server": "cd server && npm run dev",
     "start:client": "cd client && npm run dev",
-    "start:ml": "cd Dropout.P\\Dropout.P && python api.py",
+    "start:ml": "cd ml-service && .\\venv\\Scripts\\python.exe api.py",
     "start:ai": "cd ai-service && npm run dev"
   },
   "devDependencies": {

@@ -31,7 +31,7 @@ The architecture of this project is a **microservices-based system** consisting 
   - **Endpoints:** Provides CRUD operations for Students, Users, Escalations, and Intervention Notes.
   - **Risk Calculator Gateway (`services/riskCalculator.js`):** Acts as the bridge that formats student data into ML-ready features (e.g., `attendance_percentage`, `backlogs`) and sends HTTP POST requests to the Python ML API.
 
-## 3. Machine Learning Engine (`Dropout.P/`)
+## 3. Machine Learning Engine (`ml-service/`)
 - **Tech Stack:** Python, FastAPI, Scikit-Learn, SHAP, Pandas
 - **Port:** 8000
 - **Role:** The predictive brain of the system.
