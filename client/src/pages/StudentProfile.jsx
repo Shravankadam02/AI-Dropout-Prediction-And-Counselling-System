@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { FiTrendingDown, FiAlertCircle, FiUser } from "react-icons/fi";
+import { FiTrendingDown, FiAlertCircle, FiUser, FiMessageCircle } from "react-icons/fi";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import DashboardLayout from "../components/DashboardLayout";
@@ -16,6 +16,34 @@ export default function StudentProfile() {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sendingReport, setSendingReport] = useState(false);
+  const [reportSuccess, setReportSuccess] = useState("");
+
+  const handleSendReport = async () => {
+    setSendingReport(true);
+    setReportSuccess("");
+    setError("");
+    try {
+      const res = await api.post(`/reports/${studentId}/whatsapp`);
+      const { guardianContact, reportText } = res.data;
+      
+      // Ensure number has country code for WhatsApp (defaulting to +91 for India)
+      let phone = guardianContact;
+      if (!phone.startsWith("+")) {
+        phone = "+91" + phone;
+      }
+      
+      // Open WhatsApp Click-to-Chat in a new tab
+      const encodedText = encodeURIComponent(reportText);
+      window.open(`https://wa.me/${phone}?text=${encodedText}`, '_blank');
+      
+      setReportSuccess("WhatsApp chat opened successfully!");
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to prepare report");
+    } finally {
+      setSendingReport(false);
+    }
+  };
 
   useEffect(() => {
     Promise.all([
@@ -49,12 +77,31 @@ export default function StudentProfile() {
   const { student, risk } = data;
   const canWrite = user?.role === "mentor" || user?.role === "admin";
 
+  const headerActions = canWrite ? (
+    <button
+      onClick={handleSendReport}
+      disabled={sendingReport}
+      className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg font-medium hover:bg-emerald-100 transition border border-emerald-200 disabled:opacity-50"
+    >
+      <FiMessageCircle size={16} />
+      {sendingReport ? "Sending..." : "Message Guardian"}
+    </button>
+  ) : null;
+
   return (
     <DashboardLayout
       title={`${student.firstName} ${student.lastName}`}
       subtitle={`${student.studentId} · ${student.class} · ${student.department}`}
       headerIcon={FiUser}
+      headerActions={headerActions}
     >
+      {reportSuccess && (
+        <div className="mb-6 p-4 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-lg flex items-center gap-3">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <p className="text-sm font-medium">{reportSuccess}</p>
+        </div>
+      )}
+      
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Risk overview */}
         <div className="lg:col-span-2 space-y-6">

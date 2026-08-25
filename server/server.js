@@ -12,6 +12,7 @@ import escalationRoutes from './routes/escalations.js';
 import chatRoutes from './routes/chat.js';
 import counsellorRoutes from './routes/counsellors.js';
 import notificationRoutes from './routes/notifications.js';
+import reportRoutes from './routes/reports.js';
 const app = express();
 connectDB();
 
@@ -28,6 +29,7 @@ app.use('/api/escalations', escalationRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/counsellors', counsellorRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/reports', reportRoutes);
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'SIH Dropout Prediction API v2.0 running' });
 });

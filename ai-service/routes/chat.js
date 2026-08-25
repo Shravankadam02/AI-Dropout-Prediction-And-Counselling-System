@@ -3,6 +3,7 @@ import { QdrantClient } from '@qdrant/js-client-rest';
 import ChatSession from '../models/ChatSession.js';
 import ChatMessage from '../models/ChatMessage.js';
 import Escalation from '../models/Escalation.js';
+import Notification from '../models/Notification.js';
 import {
   checkDistressKeywords,
   checkDistressIntent,
@@ -141,6 +142,16 @@ router.post('/', async (req, res) => {
         chatSessionId: session._id,
         status: 'open',
       });
+
+      if (studentContext.mentorId) {
+        await Notification.create({
+          recipientId: studentContext.mentorId,
+          title: 'New Student Escalation',
+          message: `Automatic escalation triggered for ${studentContext.firstName || studentContext.studentId} due to distress keywords.`,
+          type: 'warning',
+          link: '/dashboard',
+        });
+      }
 
       session.status = 'escalated';
       await session.save();
@@ -290,6 +301,16 @@ router.post('/escalate', async (req, res) => {
         chatSessionId: session._id,
         status: 'open',
       });
+
+    if (studentContext.mentorId) {
+      await Notification.create({
+        recipientId: studentContext.mentorId,
+        title: 'New Student Escalation',
+        message: `${studentContext.firstName || studentContext.studentId} has manually requested to speak with you.`,
+        type: 'info',
+        link: '/dashboard',
+      });
+    }
 
     session.status = 'escalated';
     await session.save();
