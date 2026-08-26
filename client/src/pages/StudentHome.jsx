@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FiCheckCircle, FiHeart, FiTrendingUp, FiMessageCircle, FiCalendar, FiDownload, FiBookOpen } from 'react-icons/fi';
+import { FiCheckCircle, FiHeart, FiTrendingUp, FiMessageCircle, FiCalendar, FiDownload, FiBookOpen, FiMic } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
@@ -158,15 +158,20 @@ export default function StudentHome() {
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-600/5 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-indigo-600/10 transition-colors" />
               <div className="relative z-10">
-                <div className="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center mb-5 shadow-md shadow-indigo-600/20 group-hover:scale-110 transition-transform">
-                  <FiMessageCircle size={24} />
+                <div className="flex items-center justify-between mb-5">
+                  <div className="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20 group-hover:scale-110 transition-transform">
+                    <FiMessageCircle size={24} />
+                  </div>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 border border-indigo-200">
+                    <FiMic size={12} className="text-indigo-600" /> Voice & Text
+                  </span>
                 </div>
                 <h3 className="text-xl font-bold text-slate-800 mb-2 tracking-tight">Talk to your AI Mentor</h3>
                 <p className="text-sm text-slate-500 leading-relaxed mb-6 font-medium">
-                  Get personalized study tips, discuss stress, or ask any questions 24/7.
+                  Speak or text 24/7 to get personalized study guidance, discuss stress, and get real-time answers.
                 </p>
                 <div className="flex items-center text-sm font-bold text-indigo-600">
-                  Start Chat <span className="ml-1.5 group-hover:translate-x-1.5 transition-transform">→</span>
+                  Start Voice & Text Chat <span className="ml-1.5 group-hover:translate-x-1.5 transition-transform">→</span>
                 </div>
               </div>
             </button>

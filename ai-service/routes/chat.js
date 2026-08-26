@@ -156,17 +156,17 @@ router.post('/', async (req, res) => {
       session.status = 'escalated';
       await session.save();
 
-      const handoffReply =
-        "I hear that this is difficult, and I want to make sure you get the right support. I'm connecting you with your mentor now — they'll be able to help in a way I can't.";
+      const supportiveReply =
+        "Thank you for sharing this with me — I hear how difficult things are right now, and you don't have to carry this all alone. I've let your mentor know so you have extra support in your corner, and if you ever feel in immediate danger, please reach out to local emergency services or a crisis helpline right away. I'm right here with you. Can you tell me a little more about what's been happening?";
 
       await ChatMessage.create({
         chatSessionId: session._id,
         role: 'ai',
-        content: handoffReply,
+        content: supportiveReply,
       });
 
       return res.json({
-        reply: handoffReply,
+        reply: supportiveReply,
         chatSessionId: session._id,
         escalated: true,
         escalationId: escalation._id,
