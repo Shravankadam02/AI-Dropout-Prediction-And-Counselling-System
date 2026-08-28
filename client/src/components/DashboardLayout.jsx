@@ -86,7 +86,7 @@ export default function DashboardLayout({ title, subtitle, headerIcon: HeaderIco
               <FaGraduationCap size={18} />
             </div>
             <span className="text-sm font-semibold text-white hidden sm:block tracking-wide">
-              AI Dropout Prediction System
+              AI Dropout Prediction and Counselling System
             </span>
           </div>
         </div>
