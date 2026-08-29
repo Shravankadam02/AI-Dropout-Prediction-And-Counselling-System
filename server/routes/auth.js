@@ -8,7 +8,7 @@ const router = express.Router();
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
-    const { username, password, role, studentId, mentorCode, counsellorCode, specialization, phone } = req.body;
+    const { username, password, role, studentId, mentorCode, counsellorCode, specialization, phone, location } = req.body;
 
     if (!username || !password || !role) {
       return res.status(400).json({ message: 'username, password, and role are required' });
@@ -53,6 +53,7 @@ router.post('/register', async (req, res) => {
       counsellorCode: role === 'counsellor' ? counsellorCode : null,
       specialization: role === 'counsellor' ? specialization : null,
       phone: role === 'counsellor' ? phone : null,
+      location: role === 'counsellor' ? location : null,
     });
 
     res.status(201).json({
@@ -101,7 +102,8 @@ router.post('/login', async (req, res) => {
         studentId: user.studentId, 
         mentorCode: user.mentorCode,
         counsellorCode: user.counsellorCode,
-        phone: user.phone 
+        phone: user.phone,
+        location: user.location,
       },
     });
   } catch (err) {

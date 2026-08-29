@@ -6,7 +6,7 @@ import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 export default function Register() {
   const [form, setForm] = useState({
-    username: '', password: '', confirmPassword: '', role: 'student', studentId: '', mentorCode: '', counsellorCode: '', phone: ''
+    username: '', password: '', confirmPassword: '', role: 'student', studentId: '', mentorCode: '', counsellorCode: '', phone: '', location: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -40,6 +40,7 @@ export default function Register() {
         mentorCode: form.role === 'mentor' ? form.mentorCode : undefined,
         counsellorCode: form.role === 'counsellor' ? form.counsellorCode : undefined,
         phone: form.role === 'counsellor' ? form.phone : undefined,
+        location: form.role === 'counsellor' ? form.location : undefined,
       });
       setSuccess(true);
       setTimeout(() => navigate('/login'), 1500);
@@ -198,6 +199,17 @@ export default function Register() {
                     required
                   />
                   <p className="text-[11px] text-slate-500 font-medium mt-1.5 ml-1">Students will see this number to contact you.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2 mt-4">Location</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Gangapur Road, CIDCO"
+                    value={form.location}
+                    onChange={update('location')}
+                    className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-600/50 focus:border-indigo-600 transition shadow-sm bg-slate-50/50 focus:bg-white"
+                  />
+                  <p className="text-[11px] text-slate-500 font-medium mt-1.5 ml-1">Helps students find nearby counsellors.</p>
                 </div>
               </>
             )}

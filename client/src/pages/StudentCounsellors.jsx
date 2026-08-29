@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
 import DashboardLayout from '../components/DashboardLayout';
-import { FiSearch, FiPhone, FiCheckCircle } from 'react-icons/fi';
+import { FiSearch, FiPhone, FiCheckCircle, FiMapPin } from 'react-icons/fi';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -55,7 +55,8 @@ export default function StudentCounsellors() {
 
   const filtered = counsellors.filter(c => 
     c.username.toLowerCase().includes(search.toLowerCase()) || 
-    (c.specialization && c.specialization.toLowerCase().includes(search.toLowerCase()))
+    (c.specialization && c.specialization.toLowerCase().includes(search.toLowerCase())) ||
+    (c.location && c.location.toLowerCase().includes(search.toLowerCase()))
   );
 
   return (
@@ -67,7 +68,7 @@ export default function StudentCounsellors() {
           <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input
             type="text"
-            placeholder="Search by name or specialization..."
+            placeholder="Search by name, specialization, or location..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-white border border-slate-200 rounded-xl pl-12 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition shadow-sm"
@@ -99,6 +100,12 @@ export default function StudentCounsellors() {
                       <div className="flex items-center gap-2 text-sm text-slate-600">
                         <FiPhone size={14} className="text-slate-400" />
                         {c.phone}
+                      </div>
+                    )}
+                    {c.location && (
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                        <FiMapPin size={14} className="text-slate-400" />
+                        {c.location}
                       </div>
                     )}
                     {c.languages?.length > 0 && (

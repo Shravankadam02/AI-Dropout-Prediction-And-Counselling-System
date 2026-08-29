@@ -15,6 +15,7 @@ const userSchema = new mongoose.Schema(
     specialization: { type: String, default: null }, // e.g. "Academic Stress", "Career"
     languages: { type: [String], default: [] }, // e.g. ["English", "Hindi"]
     phone: { type: String, default: null }, // Contact number for students to see
+    location: { type: String, default: null }, // e.g. "Gangapur Road", "CIDCO"
   },
   { timestamps: true }
 );
