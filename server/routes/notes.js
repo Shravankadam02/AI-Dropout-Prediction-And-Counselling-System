@@ -94,4 +94,28 @@ router.patch('/:noteId/status', protect, requireRole('mentor', 'admin'), async (
   }
 });
 
+// DELETE /api/notes/:noteId — delete an intervention note
+router.delete('/:noteId', protect, requireRole('mentor', 'admin'), async (req, res) => {
+  try {
+    const note = await Note.findById(req.params.noteId);
+    if (!note) {
+      return res.status(404).json({ message: 'Note not found' });
+    }
+
+    // Mentor can only delete notes for their own assigned students
+    if (req.user.role === 'mentor') {
+      const student = await Student.findOne({ studentId: note.studentId });
+      if (!student || student.mentorId !== req.user.mentorCode) {
+        return res.status(403).json({ message: 'Not authorized to delete this note' });
+      }
+    }
+
+    await Note.findByIdAndDelete(req.params.noteId);
+
+    res.json({ message: 'Note deleted', noteId: req.params.noteId });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
 export default router;

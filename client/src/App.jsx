@@ -16,7 +16,18 @@ import AdminAssignments from "./pages/AdminAssignments";
 import MentorEscalations from "./pages/MentorEscalations";
 import CounsellorDashboard from "./pages/CounsellorDashboard";
 import StudentCounsellors from "./pages/StudentCounsellors";
+import { useAuth } from "./context/AuthContext";
 import MentorAnalytics from "./pages/MentorAnalytics";
+
+function DashboardRedirect() {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="p-8 text-center text-gray-500">Loading...</div>;
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role === 'admin') return <Navigate to="/admin" replace />;
+  if (user.role === 'mentor') return <Navigate to="/mentor" replace />;
+  if (user.role === 'counsellor') return <Navigate to="/counsellor" replace />;
+  return <Navigate to="/me" replace />;
+}
 
 function App() {
   return (
@@ -24,9 +35,12 @@ function App() {
       <AuthProvider>
         <ToastProvider>
           <Routes>
+            <Route path="/" element={<Login />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
+            <Route path="/dashboard" element={<DashboardRedirect />} />
+            <Route path="/escalations" element={<Navigate to="/mentor/escalations" replace />} />
 
             <Route
               path="/mentor"

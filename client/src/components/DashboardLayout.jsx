@@ -50,10 +50,28 @@ export default function DashboardLayout({ title, subtitle, headerIcon: HeaderIco
         console.error("Failed to mark as read", err);
       }
     }
-    if (notification.link) {
-      navigate(notification.link);
-    }
     setNotificationsOpen(false);
+
+    if (notification.link) {
+      let targetLink = notification.link;
+      // Resolve generic or legacy '/dashboard' links safely based on user role and notification context
+      if (targetLink === '/dashboard') {
+        if (notification.title?.toLowerCase().includes('escalation')) {
+          targetLink = '/mentor/escalations';
+        } else if (user?.role === 'mentor') {
+          targetLink = '/mentor';
+        } else if (user?.role === 'admin') {
+          targetLink = '/admin';
+        } else if (user?.role === 'counsellor') {
+          targetLink = '/counsellor';
+        } else {
+          targetLink = '/me';
+        }
+      } else if (targetLink === '/escalations') {
+        targetLink = '/mentor/escalations';
+      }
+      navigate(targetLink);
+    }
   };
 
   const handleMarkAllRead = async () => {

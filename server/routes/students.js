@@ -132,7 +132,7 @@ router.get('/:id', protect, async (req, res) => {
     const mlInsights = student.mlInsights;
 
     const topReasons = getTopReasons(mlInsights);
-    const recommendations = generateRecommendations(riskLevel, mlInsights);
+    const recommendations = generateRecommendations(riskLevel, mlInsights, student);
 
     res.json({
       student: {

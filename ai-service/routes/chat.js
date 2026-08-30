@@ -149,7 +149,7 @@ router.post('/', async (req, res) => {
           title: 'New Student Escalation',
           message: `Automatic escalation triggered for ${studentContext.firstName || studentContext.studentId} due to distress keywords.`,
           type: 'warning',
-          link: '/dashboard',
+          link: '/mentor/escalations',
         });
       }
 
@@ -308,7 +308,7 @@ router.post('/escalate', async (req, res) => {
         title: 'New Student Escalation',
         message: `${studentContext.firstName || studentContext.studentId} has manually requested to speak with you.`,
         type: 'info',
-        link: '/dashboard',
+        link: '/mentor/escalations',
       });
     }
 

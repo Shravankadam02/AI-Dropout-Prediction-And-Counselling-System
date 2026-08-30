@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FiCheckCircle, FiHeart, FiTrendingUp, FiMessageCircle, FiCalendar, FiDownload, FiBookOpen, FiMic } from 'react-icons/fi';
-import { Link } from 'react-router-dom';
+import { FiCheckCircle, FiAlertCircle, FiHeart, FiTrendingUp, FiMessageCircle, FiCalendar, FiDownload, FiBookOpen, FiMic } from 'react-icons/fi';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import api from '../api/axios';
@@ -10,11 +9,127 @@ import ProgressRing from '../components/ProgressRing';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const ENCOURAGEMENT = {
-  Low: { title: "You're doing great, keep it up!", message: "Your attendance and scores are consistently on track. Keep up the excellent work." },
-  Medium: { title: "A few things to work on", message: "Some areas need your attention. Small, steady improvements can make a huge difference." },
-  High: { title: "Let's get you back on track", message: "Your mentor is ready to help. Reaching out early makes the biggest difference to your success." },
-};
+export function evaluateStudentStatusAndRecommendations(student, risk) {
+  const attendance = student?.attendancePercent ?? 0;
+  const lastAvg = student?.last3TestsAvg ?? 0;
+  const prevAvg = student?.previous3TestsAvg ?? 0;
+  const feesDue = student?.feesDueDays ?? 0;
+  const attempts = student?.attemptsInSubjectX ?? 1;
+  const scoreImproved = lastAvg >= prevAvg;
+  const riskLevel = risk?.riskLevel || 'Low';
+  const riskScore = risk?.riskScore ?? 0;
+
+  const isCriticallyLowAttendance = attendance < 60;
+  const isWarningAttendance = attendance >= 60 && attendance < 75;
+  const isGoodAttendance = attendance >= 75;
+
+  const isLowScore = lastAvg < 50;
+  const scoreDroppedSignificantly = prevAvg - lastAvg >= 8;
+  const hasSubjectBacklogs = attempts > 1;
+  const hasFeesOverdue = feesDue > 0;
+  const isHighFeeOverdue = feesDue > 30;
+
+  const isHighMLRisk = riskLevel === 'High' || riskScore >= 0.7;
+  const isMediumMLRisk = riskLevel === 'Medium' || (riskScore >= 0.4 && riskScore < 0.7);
+
+  // Determine overall status
+  let status = {
+    level: 'good',
+    title: "You're doing great, keep it up!",
+    message: "Your attendance and scores are consistently on track. Keep up the excellent work.",
+    badge: "Good Standing"
+  };
+
+  if (isCriticallyLowAttendance || isHighMLRisk || (isLowScore && hasSubjectBacklogs)) {
+    status.level = 'critical';
+    status.title = "Let's get you back on track";
+    status.badge = "Immediate Attention";
+
+    if (isCriticallyLowAttendance) {
+      status.message = `Your attendance is currently at ${attendance}%, which needs immediate attention. Try to attend upcoming classes consistently and reach out to your mentor for guidance.`;
+    } else if (isLowScore) {
+      status.message = `Your recent test performance (${lastAvg}%) needs immediate attention. Connect with your mentor and teachers for extra academic support.`;
+    } else {
+      status.message = "Multiple academic indicators require urgent attention. Your mentor is ready to help you get back on track.";
+    }
+  } else if (isWarningAttendance || isMediumMLRisk || scoreDroppedSignificantly || isLowScore || hasFeesOverdue || hasSubjectBacklogs) {
+    status.level = 'warning';
+    status.title = "A few things to work on";
+    status.badge = "Needs Attention";
+
+    if (isWarningAttendance) {
+      status.message = `Your attendance is currently ${attendance}%, which is below the recommended 75% threshold. Focusing on regular attendance will help you get back on track.`;
+    } else if (scoreDroppedSignificantly) {
+      status.message = `Your recent test average has dipped slightly. Small, steady improvements and revision can make a huge difference.`;
+    } else if (hasFeesOverdue) {
+      status.message = `You have outstanding fee payments (${feesDue} days overdue). Please connect with administration to resolve this promptly.`;
+    } else {
+      status.message = "Some areas need your attention. Small, steady improvements can make a huge difference.";
+    }
+  } else if (isGoodAttendance && !isLowScore && !isHighFeeOverdue && !isHighMLRisk) {
+    status.level = 'good';
+    status.title = "You're doing great, keep it up!";
+    status.message = "Your attendance and academic scores are consistently on track. Keep up the excellent work!";
+    status.badge = "Good Standing";
+  }
+
+  // Generate dynamic, prioritized recommendations
+  const recommendations = [];
+
+  // 1. Attendance Recommendation (Highest priority if low)
+  if (isCriticallyLowAttendance) {
+    recommendations.push(
+      `Your attendance is currently ${attendance}%, which needs immediate attention. Try to attend upcoming classes consistently and consider speaking with your mentor about any difficulties affecting your attendance.`
+    );
+  } else if (isWarningAttendance) {
+    recommendations.push(
+      `Your attendance is currently ${attendance}%. Aim to attend all upcoming lectures to bring your attendance above the 75% requirement.`
+    );
+  } else {
+    recommendations.push(
+      `Maintain your strong attendance consistency (${attendance}%) throughout the upcoming semester modules.`
+    );
+  }
+
+  // 2. Academic Performance Recommendation
+  if (hasSubjectBacklogs) {
+    recommendations.push(
+      `You have ${attempts} attempts recorded in challenging subjects. Consider joining peer tutoring or attending faculty doubt-clearing sessions.`
+    );
+  } else if (isLowScore) {
+    recommendations.push(
+      `Your recent test average is ${lastAvg}%. Dedicate focused study hours and reach out to course instructors for help in difficult topics.`
+    );
+  } else if (scoreDroppedSignificantly) {
+    recommendations.push(
+      `Your recent test average (${lastAvg}%) dipped compared to earlier tests (${prevAvg}%). Review weak areas before the next evaluation.`
+    );
+  } else if (lastAvg >= 75 && scoreImproved) {
+    recommendations.push(
+      `Great academic progress! Your recent test average (${lastAvg}%) is improving. Maintain this momentum for upcoming assessments.`
+    );
+  } else {
+    recommendations.push(
+      `Keep up your regular study habits and revision schedule to stay prepared for upcoming assessments.`
+    );
+  }
+
+  // 3. Fee Status Recommendation
+  if (hasFeesOverdue) {
+    recommendations.push(
+      `Fee payment is pending for ${feesDue} day${feesDue > 1 ? 's' : ''}. Check with the accounts department to explore installment or scholarship options.`
+    );
+  }
+
+  // 4. Mentor / Guidance Recommendation
+  if (isCriticallyLowAttendance || isHighMLRisk || hasSubjectBacklogs) {
+    recommendations.push(
+      "Schedule a one-on-one session with your mentor to build a personalized study and attendance recovery plan."
+    );
+  }
+
+  return { status, recommendations: [...new Set(recommendations)], scoreImproved };
+}
 
 export default function StudentHome() {
   const { user } = useAuth();
@@ -34,8 +149,7 @@ export default function StudentHome() {
   if (error || !data) return <DashboardLayout title="My Progress"><p className="text-sm text-red-600">{error}</p></DashboardLayout>;
 
   const { student, risk } = data;
-  const tone = ENCOURAGEMENT[risk.riskLevel] || ENCOURAGEMENT.Low;
-  const scoreImproved = student.last3TestsAvg >= student.previous3TestsAvg;
+  const { status, recommendations, scoreImproved } = evaluateStudentStatusAndRecommendations(student, risk);
 
   const chartData = {
     labels: ['Previous Tests', 'Recent Tests'],
@@ -82,6 +196,18 @@ export default function StudentHome() {
     }
   };
 
+  const attendanceRingColor = student.attendancePercent >= 75 
+    ? '#4f46e5' 
+    : student.attendancePercent >= 60 
+      ? '#D97706' 
+      : '#e11d48';
+
+  const attendanceTextColor = student.attendancePercent >= 75 
+    ? 'text-slate-800' 
+    : student.attendancePercent >= 60 
+      ? 'text-amber-600' 
+      : 'text-rose-600';
+
   return (
     <DashboardLayout 
       title={`Welcome back, ${student.firstName}!`} 
@@ -111,16 +237,26 @@ export default function StudentHome() {
             </div>
 
             {/* AI Tips */}
-            {risk.recommendations?.length > 0 && (
+            {recommendations?.length > 0 && (
               <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
                 <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
                   <FiHeart className="text-rose-500" /> AI Recommendations
                 </h3>
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {risk.recommendations.map((r, i) => (
+                  {recommendations.map((r, i) => (
                     <li key={i} className="flex items-start gap-3 bg-slate-50/50 p-4 rounded-xl border border-slate-100">
-                      <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
-                        <FiCheckCircle size={14} />
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                        status.level === 'critical' && i === 0 
+                          ? 'bg-rose-100 text-rose-600' 
+                          : status.level === 'warning' && i === 0 
+                            ? 'bg-amber-100 text-amber-600' 
+                            : 'bg-emerald-100 text-emerald-600'
+                      }`}>
+                        {status.level === 'critical' && i === 0 ? (
+                          <FiAlertCircle size={14} />
+                        ) : (
+                          <FiCheckCircle size={14} />
+                        )}
                       </div>
                       <span className="text-sm text-slate-700 font-medium leading-relaxed">{r}</span>
                     </li>
@@ -130,18 +266,40 @@ export default function StudentHome() {
             )}
 
             {/* AI Status Report Banner */}
-            <div className="relative bg-gradient-to-r from-indigo-900 via-indigo-800 to-blue-900 rounded-2xl p-8 sm:p-10 text-white overflow-hidden shadow-xl shadow-indigo-900/10">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl -mr-20 -mt-20" />
+            <div className={`relative rounded-2xl p-8 sm:p-10 text-white overflow-hidden shadow-xl ${
+              status.level === 'critical'
+                ? 'bg-gradient-to-r from-slate-900 via-rose-950 to-indigo-950 shadow-rose-950/20'
+                : status.level === 'warning'
+                  ? 'bg-gradient-to-r from-slate-900 via-amber-950 to-indigo-950 shadow-amber-950/20'
+                  : 'bg-gradient-to-r from-indigo-900 via-indigo-800 to-blue-900 shadow-indigo-900/10'
+            }`}>
+              <div className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl -mr-20 -mt-20 ${
+                status.level === 'critical'
+                  ? 'bg-rose-500/20'
+                  : status.level === 'warning'
+                    ? 'bg-amber-500/20'
+                    : 'bg-indigo-500/20'
+              }`} />
               <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                 <div>
                   <p className="text-indigo-200 text-xs font-bold mb-2 tracking-widest uppercase">AI Status Report</p>
-                  <h2 className="text-2xl sm:text-3xl font-bold mb-2">{tone.title}</h2>
-                  <p className="text-indigo-100 max-w-lg leading-relaxed text-sm sm:text-base">{tone.message}</p>
+                  <h2 className="text-2xl sm:text-3xl font-bold mb-2">{status.title}</h2>
+                  <p className="text-indigo-100 max-w-lg leading-relaxed text-sm sm:text-base">{status.message}</p>
                 </div>
-                {student.attendancePercent >= 75 && (
-                  <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-full border border-white/20 shrink-0">
-                    <FiCheckCircle className="text-emerald-400" size={18} />
-                    <span className="text-sm font-semibold tracking-wide">Good Standing</span>
+                {status.badge && (
+                  <div className={`flex items-center gap-2 px-4 py-2.5 rounded-full border shrink-0 text-sm font-semibold tracking-wide backdrop-blur-md ${
+                    status.level === 'good'
+                      ? 'bg-white/10 border-white/20 text-white'
+                      : status.level === 'warning'
+                        ? 'bg-amber-500/20 border-amber-400/40 text-amber-200'
+                        : 'bg-rose-500/20 border-rose-400/40 text-rose-200'
+                  }`}>
+                    {status.level === 'good' ? (
+                      <FiCheckCircle className="text-emerald-400" size={18} />
+                    ) : (
+                      <FiAlertCircle className={status.level === 'warning' ? 'text-amber-300' : 'text-rose-400'} size={18} />
+                    )}
+                    <span>{status.badge}</span>
                   </div>
                 )}
               </div>
@@ -181,11 +339,11 @@ export default function StudentHome() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-slate-500 mb-1 uppercase tracking-wider">Attendance</p>
-                  <p className={`text-3xl font-bold tracking-tight ${student.attendancePercent >= 75 ? 'text-slate-800' : 'text-amber-600'}`}>
+                  <p className={`text-3xl font-bold tracking-tight ${attendanceTextColor}`}>
                     {student.attendancePercent}%
                   </p>
                 </div>
-                <ProgressRing value={student.attendancePercent} label="" color={student.attendancePercent >= 75 ? '#4f46e5' : '#D97706'} />
+                <ProgressRing value={student.attendancePercent} label="" color={attendanceRingColor} />
               </div>
               <div className="h-px w-full bg-slate-100" />
               <div>

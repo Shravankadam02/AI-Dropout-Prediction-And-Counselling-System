@@ -226,6 +226,9 @@ export default function StudentProfile() {
             onNoteUpdated={(updated) =>
               setNotes(notes.map((n) => (n._id === updated._id ? updated : n)))
             }
+            onNoteDeleted={(deletedId) =>
+              setNotes(notes.filter((n) => n._id !== deletedId))
+            }
           />
         </div>
       </div>
