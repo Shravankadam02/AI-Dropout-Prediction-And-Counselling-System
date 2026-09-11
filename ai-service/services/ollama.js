@@ -10,6 +10,7 @@ export async function generateEmbedding(text) {
       model: 'nomic-embed-text',
       input: text,
     }),
+    signal: AbortSignal.timeout(15000),
   });
 
   if (!response.ok) {
@@ -51,6 +52,7 @@ export async function generateChat(messages, systemPrompt = '') {
         temperature: 0.4,
       },
     }),
+    signal: AbortSignal.timeout(25000),
   });
 
   if (!response.ok) {

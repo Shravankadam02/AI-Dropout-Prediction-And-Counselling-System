@@ -177,11 +177,17 @@ router.post('/', async (req, res) => {
     // NORMAL RAG FLOW
     // ---------------------------------------
 
-    // Generate local embedding using Nomic
-    const queryVector = await embedQuery(message);
+    let retrieved = [];
+    try {
+      // Generate local embedding using Nomic
+      const queryVector = await embedQuery(message);
 
-    // Search Qdrant
-    const retrieved = await retrieveContext(queryVector);
+      // Search Qdrant
+      retrieved = await retrieveContext(queryVector);
+    } catch (ragErr) {
+      console.warn('RAG retrieval failed or timed out, falling back to direct LLM generation:', ragErr.message);
+      retrieved = [];
+    }
 
     const topScore =
       retrieved.length > 0

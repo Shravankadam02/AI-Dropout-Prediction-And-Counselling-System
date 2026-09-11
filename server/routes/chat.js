@@ -33,11 +33,15 @@ router.post('/', protect, requireRole('student'), async (req, res) => {
       feesDueDays: student.feesDueDays,
     };
 
-    const aiRes = await axios.post(`${AI_SERVICE_URL}/chat`, {
-      message,
-      studentContext,
-      chatSessionId,
-    });
+    const aiRes = await axios.post(
+      `${AI_SERVICE_URL}/chat`,
+      {
+        message,
+        studentContext,
+        chatSessionId,
+      },
+      { timeout: 25000 }
+    );
 
     res.json(aiRes.data);
   } catch (err) {
@@ -63,7 +67,11 @@ router.post('/escalate', protect, requireRole('student'), async (req, res) => {
       mentorId: student.mentorId,
     };
 
-    const aiRes = await axios.post(`${AI_SERVICE_URL}/chat/escalate`, { chatSessionId, studentContext });
+    const aiRes = await axios.post(
+      `${AI_SERVICE_URL}/chat/escalate`,
+      { chatSessionId, studentContext },
+      { timeout: 25000 }
+    );
     
     // Notify the mentor
     if (student.mentorId) {

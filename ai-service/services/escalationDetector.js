@@ -1,12 +1,10 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+import { generateChat } from './ollama.js';
 
 // Fast first-pass — catches obvious explicit cases cheaply, without an extra API call
 const DISTRESS_PATTERNS = [
-  /\b(suicid|self.?harm|kill myself|end my life|hurt myself)\b/i,
-  /\b(want to die|no reason to live|can'?t go on)\b/i,
-  /\b(talk to (a )?(real|human) (person|mentor)|speak to my mentor|connect me (with|to) my mentor)\b/i,
+  /\b(suicid|self.?harm|kill myself|end my life|hurt myself|taking my life)\b/i,
+  /\b(want to die|no reason to (live|keep living)|don'?t want to live|can'?t go on|give up on life|giving up on life)\b/i,
+  /\b(talk to (a )?(real|human) (person|mentor|counselor)|speak to my mentor|connect me (with|to) my mentor)\b/i,
   /\b(being harassed|being bullied|someone is threatening)\b/i,
 ];
 
@@ -27,13 +25,19 @@ Message: "${message}"
 Classification:`;
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash' });
-    const result = await model.generateContent(prompt);
-    const classification = result.response.text().trim().toLowerCase();
-    return classification.includes('escalate');
+    const result = await generateChat([
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ]);
+    const classification = result.trim().toLowerCase();
+    return (
+      classification.includes('escalate') ||
+      /\b(suicid|self-harm|helpline|crisis|lifeline)\b/i.test(classification)
+    );
   } catch (err) {
-    // If classification itself fails, fail safe — escalate rather than silently miss it
-    console.error('Distress classification failed, escalating as precaution:', err.message);
-    return true;
+    console.error('Distress intent classification failed:', err.message);
+    return false;
   }
 }
