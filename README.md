@@ -1,4 +1,4 @@
-# 🎓 AI Dropout Prediction System v2.0
+# 🎓 EduSaarthi — AI Dropout Prediction & Counselling System v2.0
 
 > An intelligent, multi-role platform designed to identify at-risk students, predict dropout probabilities, and facilitate timely interventions using AI and Human-in-the-Loop systems. Developed for the **Smart India Hackathon (SIH)**.
 

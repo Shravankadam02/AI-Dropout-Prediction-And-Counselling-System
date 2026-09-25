@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiAlertTriangle, FiClock, FiCheckCircle } from 'react-icons/fi';
+import { FiAlertTriangle, FiClock, FiCheckCircle, FiUploadCloud } from 'react-icons/fi';
 import api from '../api/axios';
 import DashboardLayout from '../components/DashboardLayout';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
+import UploadResourceModal from '../components/UploadResourceModal';
 
 const STATUS_STYLES = {
   open: { bg: 'bg-red-50', text: 'text-red-700', icon: FiAlertTriangle },
@@ -18,6 +19,8 @@ export default function MentorEscalations() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('All');
+  const [resourceModalOpen, setResourceModalOpen] = useState(false);
+  const [selectedEsc, setSelectedEsc] = useState(null);
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { user } = useAuth();
@@ -114,10 +117,24 @@ export default function MentorEscalations() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 shrink-0">
+                <div className="flex items-center gap-2.5 shrink-0">
                   <span className="text-xs text-slate-400 hidden sm:inline">
                     {new Date(esc.createdAt).toLocaleDateString()}
                   </span>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedEsc(esc);
+                      setResourceModalOpen(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full border border-indigo-200 transition"
+                    title="Share study or recovery resource with this student"
+                  >
+                    <FiUploadCloud size={13} />
+                    <span className="hidden sm:inline">Share Resource</span>
+                  </button>
+
                   <select
                     value={esc.status}
                     onChange={(e) => updateStatus(esc._id, e.target.value, e)}
@@ -138,6 +155,20 @@ export default function MentorEscalations() {
           );
         })}
       </div>
+
+      <UploadResourceModal
+        isOpen={resourceModalOpen}
+        onClose={() => {
+          setResourceModalOpen(false);
+          setSelectedEsc(null);
+        }}
+        preselectedStudent={
+          selectedEsc
+            ? { studentId: selectedEsc.studentId, name: selectedEsc.studentName }
+            : null
+        }
+        preselectedEscalationId={selectedEsc?._id}
+      />
     </DashboardLayout>
   );
 }

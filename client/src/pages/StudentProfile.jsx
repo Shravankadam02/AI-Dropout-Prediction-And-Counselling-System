@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { FiTrendingDown, FiAlertCircle, FiUser, FiMessageCircle } from "react-icons/fi";
+import { FiTrendingDown, FiAlertCircle, FiUser, FiMessageCircle, FiBookOpen, FiUploadCloud, FiDownload, FiFileText, FiPlus } from "react-icons/fi";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import DashboardLayout from "../components/DashboardLayout";
@@ -8,12 +8,15 @@ import RiskBadge from "../components/RiskBadge";
 import RiskFactorBar from "../components/RiskFactorBar";
 import NoteThread from "../components/NoteThread";
 import RiskTrendChart from "../components/RiskTrendChart";
+import UploadResourceModal from "../components/UploadResourceModal";
 
 export default function StudentProfile() {
   const { studentId } = useParams();
   const { user } = useAuth();
   const [data, setData] = useState(null);
   const [notes, setNotes] = useState([]);
+  const [resources, setResources] = useState([]);
+  const [resourceModalOpen, setResourceModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [sendingReport, setSendingReport] = useState(false);
@@ -49,10 +52,12 @@ export default function StudentProfile() {
     Promise.all([
       api.get(`/students/${studentId}`),
       api.get(`/notes/${studentId}`),
+      api.get(`/resources/student/${studentId}`),
     ])
-      .then(([studentRes, notesRes]) => {
+      .then(([studentRes, notesRes, resourcesRes]) => {
         setData(studentRes.data);
         setNotes(notesRes.data.notes);
+        setResources(resourcesRes.data.resources || []);
       })
       .catch(() => setError("Failed to load student profile"))
       .finally(() => setLoading(false));
@@ -78,14 +83,24 @@ export default function StudentProfile() {
   const canWrite = user?.role === "mentor" || user?.role === "admin";
 
   const headerActions = canWrite ? (
-    <button
-      onClick={handleSendReport}
-      disabled={sendingReport}
-      className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-lg font-medium hover:bg-emerald-100 transition border border-emerald-200 disabled:opacity-50"
-    >
-      <FiMessageCircle size={16} />
-      {sendingReport ? "Sending..." : "Message Guardian"}
-    </button>
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => setResourceModalOpen(true)}
+        className="flex items-center gap-1.5 bg-indigo-600 text-white px-3.5 py-2 rounded-lg text-xs font-bold hover:bg-indigo-700 transition shadow-sm"
+      >
+        <FiUploadCloud size={15} />
+        <span>Share Resource</span>
+      </button>
+
+      <button
+        onClick={handleSendReport}
+        disabled={sendingReport}
+        className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3.5 py-2 rounded-lg text-xs font-semibold hover:bg-emerald-100 transition border border-emerald-200 disabled:opacity-50"
+      >
+        <FiMessageCircle size={15} />
+        {sendingReport ? "Sending..." : "Message Guardian"}
+      </button>
+    </div>
   ) : null;
 
   return (
@@ -213,25 +228,96 @@ export default function StudentProfile() {
           </div>
         </div>
 
-        {/* Right: Notes */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 h-fit">
-          <p className="text-xs font-medium text-slate-500 mb-4">
-            Intervention Notes
-          </p>
-          <NoteThread
-            studentId={studentId}
-            notes={notes}
-            canWrite={canWrite}
-            onNoteAdded={(n) => setNotes([n, ...notes])}
-            onNoteUpdated={(updated) =>
-              setNotes(notes.map((n) => (n._id === updated._id ? updated : n)))
-            }
-            onNoteDeleted={(deletedId) =>
-              setNotes(notes.filter((n) => n._id !== deletedId))
-            }
-          />
+        {/* Right: Notes & Resources */}
+        <div className="space-y-6 h-fit">
+          <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6">
+            <p className="text-xs font-medium text-slate-500 mb-4">
+              Intervention Notes
+            </p>
+            <NoteThread
+              studentId={studentId}
+              notes={notes}
+              canWrite={canWrite}
+              onNoteAdded={(n) => setNotes([n, ...notes])}
+              onNoteUpdated={(updated) =>
+                setNotes(notes.map((n) => (n._id === updated._id ? updated : n)))
+              }
+              onNoteDeleted={(deletedId) =>
+                setNotes(notes.filter((n) => n._id !== deletedId))
+              }
+            />
+          </div>
+
+          {/* Assigned Study Resources */}
+          <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Assigned Resources ({resources.length})
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  Shared materials & recovery guides
+                </p>
+              </div>
+              {canWrite && (
+                <button
+                  onClick={() => setResourceModalOpen(true)}
+                  className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 px-2.5 py-1 rounded-lg transition"
+                >
+                  <FiPlus size={14} /> Add
+                </button>
+              )}
+            </div>
+
+            {resources.length === 0 ? (
+              <p className="text-xs text-slate-400 text-center py-4">
+                No resources shared with this student yet.
+              </p>
+            ) : (
+              <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                {resources.map((item) => (
+                  <div
+                    key={item._id}
+                    className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-800 truncate">
+                        {item.title}
+                      </p>
+                      <p className="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                        <span className="font-semibold text-indigo-600">{item.category}</span>
+                        <span>•</span>
+                        <span>{item.targetType === 'single' ? 'Personalized' : 'All Students'}</span>
+                      </p>
+                    </div>
+                    <a
+                      href={item.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 p-1.5 bg-white border border-slate-200 text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                      title="Download Resource"
+                    >
+                      <FiDownload size={13} />
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      <UploadResourceModal
+        isOpen={resourceModalOpen}
+        onClose={() => setResourceModalOpen(false)}
+        preselectedStudent={{
+          studentId: student.studentId,
+          name: `${student.firstName} ${student.lastName}`,
+        }}
+        onSuccess={(newResource) => {
+          setResources((prev) => [newResource, ...prev]);
+        }}
+      />
     </DashboardLayout>
   );
 }

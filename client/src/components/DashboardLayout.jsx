@@ -103,8 +103,8 @@ export default function DashboardLayout({ title, subtitle, headerIcon: HeaderIco
             <div className="w-8 h-8 shrink-0 bg-indigo-600/20 text-indigo-400 rounded-lg flex items-center justify-center">
               <FaGraduationCap size={18} />
             </div>
-            <span className="text-sm font-semibold text-white hidden sm:block tracking-wide">
-              AI Dropout Prediction and Counselling System
+            <span className="text-base font-bold text-white hidden sm:block tracking-wide">
+              EduSaarthi
             </span>
           </div>
         </div>

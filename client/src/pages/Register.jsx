@@ -79,7 +79,7 @@ export default function Register() {
           <div className="w-10 h-10 bg-indigo-600/20 text-indigo-400 rounded-xl flex items-center justify-center backdrop-blur-sm border border-indigo-500/20">
             <FaGraduationCap size={22} />
           </div>
-          <span className="text-lg font-bold text-white tracking-wide">AI Dropout Prediction and Counselling System</span>
+          <span className="text-2xl font-extrabold text-white tracking-wide">EduSaarthi</span>
         </div>
 
         <div className="relative z-10 max-w-xl">
@@ -92,7 +92,7 @@ export default function Register() {
         </div>
         
         <div className="relative z-10 flex items-center gap-4 text-slate-500 text-sm font-medium">
-          <p>&copy; {new Date().getFullYear()} AI Dropout Prediction and Counselling System</p>
+          <p>&copy; {new Date().getFullYear()} EduSaarthi. All rights reserved.</p>
         </div>
       </div>
 

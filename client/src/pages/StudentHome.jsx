@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FiCheckCircle, FiAlertCircle, FiHeart, FiTrendingUp, FiMessageCircle, FiCalendar, FiDownload, FiBookOpen, FiMic } from 'react-icons/fi';
 import { Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
@@ -132,6 +133,7 @@ export function evaluateStudentStatusAndRecommendations(student, risk) {
 }
 
 export default function StudentHome() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -376,13 +378,16 @@ export default function StudentHome() {
                     <p className="text-xs font-medium text-slate-500 mt-0.5">Latest progress card</p>
                   </div>
                 </button>
-                <button className="w-full flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 text-left transition border border-transparent hover:border-slate-200 group">
+                <button
+                  onClick={() => navigate('/resources')}
+                  className="w-full flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 text-left transition border border-transparent hover:border-slate-200 group"
+                >
                   <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 group-hover:bg-purple-100 transition-colors">
                     <FiBookOpen size={18} />
                   </div>
                   <div>
                     <p className="text-sm font-bold text-slate-700">Study Resources</p>
-                    <p className="text-xs font-medium text-slate-500 mt-0.5">View assignments</p>
+                    <p className="text-xs font-medium text-slate-500 mt-0.5">Notes, guides & materials</p>
                   </div>
                 </button>
               </div>

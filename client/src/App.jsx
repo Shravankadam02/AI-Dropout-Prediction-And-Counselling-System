@@ -18,6 +18,8 @@ import CounsellorDashboard from "./pages/CounsellorDashboard";
 import StudentCounsellors from "./pages/StudentCounsellors";
 import { useAuth } from "./context/AuthContext";
 import MentorAnalytics from "./pages/MentorAnalytics";
+import MentorResources from "./pages/MentorResources";
+import StudentResources from "./pages/StudentResources";
 
 function DashboardRedirect() {
   const { user, loading } = useAuth();
@@ -56,6 +58,15 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["mentor"]}>
                   <MentorAnalytics />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/mentor/resources"
+              element={
+                <ProtectedRoute allowedRoles={["mentor", "admin"]}>
+                  <MentorResources />
                 </ProtectedRoute>
               }
             />
@@ -119,6 +130,15 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["student"]}>
                   <StudentHome />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/resources"
+              element={
+                <ProtectedRoute allowedRoles={["student"]}>
+                  <StudentResources />
                 </ProtectedRoute>
               }
             />

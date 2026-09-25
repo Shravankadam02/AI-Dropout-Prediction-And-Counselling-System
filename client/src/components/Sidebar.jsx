@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom';
-import { FiUsers, FiGrid, FiUploadCloud, FiHeart, FiUserCheck, FiAlertTriangle, FiMessageCircle, FiX, FiBarChart2 } from 'react-icons/fi';
+import { FiUsers, FiGrid, FiUploadCloud, FiHeart, FiUserCheck, FiAlertTriangle, FiMessageCircle, FiX, FiBarChart2, FiBookOpen } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 
 const NAV_ITEMS = {
   mentor: [
     { to: '/mentor/analytics', label: 'Analytics', icon: FiGrid },
     { to: '/mentor', label: 'My Students', icon: FiUsers },
+    { to: '/mentor/resources', label: 'Study Resources', icon: FiBookOpen },
     { to: '/mentor/escalations', label: 'Escalations', icon: FiAlertTriangle },
     { to: '/upload', label: 'Upload Data', icon: FiUploadCloud },
     { to: '/admin/batch/latest', label: 'Recent Batch', icon: FiBarChart2 },
@@ -19,6 +20,7 @@ const NAV_ITEMS = {
   ],
   student: [
     { to: '/me', label: 'My Progress', icon: FiHeart },
+    { to: '/resources', label: 'Study Resources', icon: FiBookOpen },
     { to: '/counsellors', label: 'Find Counsellor', icon: FiUsers },
   ],
   counsellor: [
